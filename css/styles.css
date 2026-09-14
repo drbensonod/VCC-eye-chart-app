@@ -1,9 +1,9 @@
 /* ============================================================
-   VCC Vision Screening App — Styles
+   VCC Vision Screening App â Styles
 
    Design intent: the stimulus field itself must stay a neutral
    clinical white with black/gray optotypes (non-negotiable,
-   dictated by the acuity standards themselves — see Section 6-7
+   dictated by the acuity standards themselves â see Section 6-7
    of the spec). All visual "design" personality lives in the
    operator-facing chrome: the calibration screen and the menu
    drawer, styled as a quiet instrument panel rather than a
@@ -130,6 +130,11 @@ html, body {
   white-space: pre;
 }
 
+.fixation-circle {
+  background: #FFFFFF;
+  border-radius: 50%;
+}
+
 .duochrome-wrap {
   display: flex;
   width: 100%;
@@ -160,7 +165,7 @@ html, body {
   width: 100%;
   /* Gap is now set per-line via inline style in JS (matching the
      exact value used in the vertical-fit budget math) rather than
-     a fixed CSS em value here — see renderStackedLines/renderVerticalColumn. */
+     a fixed CSS em value here â see renderStackedLines/renderVerticalColumn. */
 }
 
 .optotype-column {
