@@ -1,0 +1,397 @@
+/* ============================================================
+   VCC Vision Screening App — Styles
+
+   Design intent: the stimulus field itself must stay a neutral
+   clinical white with black/gray optotypes (non-negotiable,
+   dictated by the acuity standards themselves — see Section 6-7
+   of the spec). All visual "design" personality lives in the
+   operator-facing chrome: the calibration screen and the menu
+   drawer, styled as a quiet instrument panel rather than a
+   consumer app, with tabular monospace figures for anything
+   that's a measurement (distances, acuity labels, version tag).
+   ============================================================ */
+
+@font-face {
+  font-family: "OpticianSans";
+  src: url("../assets/fonts/Optician-Sans.woff2") format("woff2");
+  font-display: block;
+}
+
+:root {
+  --panel-bg: #14171C;
+  --panel-bg-raised: #1C2029;
+  --panel-border: #2A2F3A;
+  --accent: #2FB8AC;
+  --accent-warn: #D9824B;
+  --text-primary: #E8EAED;
+  --text-muted: #8A93A3;
+  --ui-font: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono-font: "IBM Plex Mono", "SF Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--ui-font);
+  background: #000;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.hidden { display: none !important; }
+
+/* ---------------- Calibration screen ---------------- */
+
+#calibration-screen {
+  background: var(--panel-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+}
+
+.cal-panel {
+  max-width: 560px;
+  width: 90%;
+  text-align: center;
+}
+.cal-panel h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+.cal-instructions {
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+.cal-guide-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 120px;
+  margin-bottom: 1rem;
+}
+.cal-guide-box {
+  height: 100px;
+  background: var(--accent);
+  border-radius: 6px;
+  width: 320px;
+  transition: width 0.02s linear;
+}
+#cal-slider {
+  width: 100%;
+  margin-bottom: 1.5rem;
+  accent-color: var(--accent);
+}
+.cal-note {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 1rem;
+  font-family: var(--mono-font);
+}
+
+/* ---------------- Main chart screen ---------------- */
+
+#main-screen {
+  background: #FFFFFF;
+}
+
+#stimulus-area {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFFFFF;
+}
+
+.stimulus-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.optotype {
+  font-family: "OpticianSans", monospace;
+  line-height: 1;
+  white-space: pre;
+}
+
+.duochrome-wrap {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+.duochrome-half {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.optotype-svg {
+  display: block;
+}
+
+.optotype-row {
+  display: flex;
+  gap: 0.4em;
+  align-items: flex-end;
+  line-height: 1;
+}
+
+.optotype-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  /* Gap is now set per-line via inline style in JS (matching the
+     exact value used in the vertical-fit budget math) rather than
+     a fixed CSS em value here — see renderStackedLines/renderVerticalColumn. */
+}
+
+.optotype-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.optotype-line-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.line-label {
+  position: absolute;
+  left: 14px;
+  font-family: var(--mono-font);
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.margin-label {
+  position: absolute;
+  bottom: 14px;
+  left: 18px;
+  font-family: var(--mono-font);
+  font-size: 0.95rem;
+  color: #444;
+  letter-spacing: 0.02em;
+}
+
+.menu-tab {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 64px;
+  background: var(--panel-bg);
+  color: var(--text-muted);
+  border-radius: 8px 0 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+/* ---------------- Menu drawer ---------------- */
+
+.menu-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(360px, 86vw);
+  background: var(--panel-bg);
+  color: var(--text-primary);
+  transform: translateX(100%);
+  transition: transform 0.22s ease;
+  overflow-y: auto;
+  padding: 1rem 1.1rem 2rem;
+  border-left: 1px solid var(--panel-border);
+}
+.menu-drawer.open {
+  transform: translateX(0);
+}
+
+.menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--panel-border);
+}
+.btn-icon {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.menu-section {
+  margin-bottom: 1.4rem;
+}
+.menu-section h2 {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin: 0 0 0.6rem;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.btn {
+  font-family: var(--ui-font);
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+  border: 1px solid var(--panel-border);
+  background: var(--panel-bg-raised);
+  color: var(--text-primary);
+}
+.btn-option.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #04211E;
+  font-weight: 600;
+}
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #04211E;
+  font-weight: 600;
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+}
+.btn-secondary {
+  background: var(--panel-bg-raised);
+}
+.btn-warning {
+  background: transparent;
+  border-color: var(--accent-warn);
+  color: var(--accent-warn);
+}
+.full-width {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.custom-distance-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+.custom-distance-row input {
+  flex: 1;
+  font-family: var(--mono-font);
+  background: var(--panel-bg-raised);
+  border: 1px solid var(--panel-border);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.menu-footer {
+  margin-top: 1.6rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--panel-border);
+}
+.branding-footer {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0.8rem 0 0.4rem;
+}
+.version-tag {
+  font-family: var(--mono-font);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ---------------- Validation / self-test overlay ---------------- */
+
+.overlay-screen {
+  background: var(--panel-bg);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.validation-panel {
+  width: 92%;
+  max-width: 640px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: var(--panel-bg-raised);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 1.2rem 1.4rem;
+}
+.validation-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.validation-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 140px;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--panel-border);
+}
+.val-label {
+  font-family: var(--mono-font);
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+.val-optotype {
+  font-family: "OpticianSans", monospace;
+  color: #FFFFFF;
+  line-height: 1;
+}
+.val-expected {
+  font-family: var(--mono-font);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-align: right;
+}
