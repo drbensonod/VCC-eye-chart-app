@@ -1,5 +1,5 @@
 /* ============================================================
-   VCC Vision Screening App — State & Calibration Module
+   VCC Vision Screening App â State & Calibration Module
    No patient data is ever stored. Only device calibration and
    the operator's last-used settings persist (localStorage).
    ============================================================ */
@@ -16,9 +16,9 @@ const BENCHMARK_DISTANCES = [
   { id: "20ft",  label: "20 ft",  inches: 240, isNearPoint: false },
 ];
 
-// Standard acuity levels expressed as the Snellen denominator's
+// Standard acuity levels expressed as the Snellen denominators
 // scale factor relative to 20/20 (i.e. factor = denom / 20).
-// Extended up to 20/500 per field testing — single-letter/single-line
+// Extended up to 20/500 per field testing â single-letter/single-line
 // modes need a coarser ceiling than 20/200 for very reduced vision.
 const ACUITY_LEVELS = [
   { snellen: "20/500", factor: 25,   logmar:  1.40 },
@@ -42,7 +42,7 @@ const ACUITY_LEVELS = [
 ];
 
 /**
- * Near-point M-notation scale — generated independently of the
+ * Near-point M-notation scale â generated independently of the
  * Snellen factor table above, since M-value is a fixed physical
  * letter size (not something to derive after the fact from a
  * distance-testing fraction). Steps by ~25% (matching the Snellen
@@ -108,12 +108,74 @@ const CONTRAST_PRESETS = [
 
 const IN_TO_MM = 25.4;
 
-// Fixation target — a solid, bright circle used for Maddox rod and
+// Fixation target â a solid, bright circle used for Maddox rod and
 // cover testing. Size locked in at 0.75 inches based on typical
 // clinical fixation target sizing (large enough to hold gaze from
 // across the room, small enough to demand a precise single fixation
 // point).
 const FIXATION_CIRCLE_DIAMETER_IN = 0.75;
+
+/* ---------------- Optokinetic (OKN) drum ---------------- */
+// Novel feature â an electronic OKN drum equivalent. Continuously
+// scrolling black/white square-wave gratings at increasing spatial
+// frequency, left to right, 100% contrast. Viewing distance fixed
+// at 16in (reuses the near-point calibration benchmark, matching
+// common OKN literature distances of ~40-60cm). Scope intentionally
+// stops at 20/25-equivalent â finer frequencies aren't clinically
+// needed here and risk unreliable rendering of a MOVING pattern at
+// that fine a pixel pitch.
+//
+// IMPORTANT PHYSICS NOTE: velocity is anchored to a fixed TEMPORAL
+// frequency (how many stripe-cycles pass a fixed point per second),
+// not to a fixed angular velocity. The classic bedside OKN drum
+// convention (~60Â°/sec) is calibrated for coarse, low-spatial-
+// frequency stripes (~0.05-0.1 cycles/degree) â applying that same
+// angular speed to our much finer acuity-grade gratings (3-24
+// cycles/degree) would produce a temporal frequency of over 100Hz,
+// far beyond human flicker fusion (~60Hz) â the pattern would look
+// like a frozen blur, not motion. Holding temporal frequency
+// constant instead keeps the perceptual "scroll rate" the same at
+// every spatial frequency, and naturally makes angular velocity
+// decrease as spatial frequency increases â matching the general
+// literature guidance without violating basic visual physiology.
+// 2Hz is a physiologically reasonable temporal frequency for
+// reliable OKN elicitation (classic OKN research finds robust
+// slow-phase tracking gain in roughly this range).
+const OKN_VIEWING_DISTANCE_IN = 16;
+const OKN_TEMPORAL_FREQUENCY_HZ = 2;
+
+const OKN_LEVELS = [
+  { snellen: "20/200", cpd: 3.0 },
+  { snellen: "20/100", cpd: 6.0 },
+  { snellen: "20/70",  cpd: 8.6 },
+  { snellen: "20/50",  cpd: 12.0 },
+  { snellen: "20/40",  cpd: 15.0 },
+  { snellen: "20/30",  cpd: 20.0 },
+  { snellen: "20/25",  cpd: 24.0 },
+].map((lvl) => ({
+  ...lvl,
+  // Angular velocity derived FROM the fixed temporal frequency,
+  // not the other way around â see note above.
+  speedDegPerSec: OKN_TEMPORAL_FREQUENCY_HZ / lvl.cpd,
+}));
+
+/** Physical width (mm) of one full grating cycle (one dark + one
+ *  light bar) at the given spatial frequency and viewing distance. */
+function oknCycleWidthMM(distanceInches, cpd) {
+  const distanceMM = distanceInches * IN_TO_MM;
+  const cycleAngleDeg = 1 / cpd; // one cycle subtends 1/f degrees
+  const halfAngleRad = (cycleAngleDeg / 2) * (Math.PI / 180);
+  return 2 * distanceMM * Math.tan(halfAngleRad);
+}
+
+/** Linear speed (mm/sec) of the pattern's motion across the screen
+ *  at the given angular velocity and viewing distance. For a point
+ *  at distance D, linear speed â D Ã angular velocity (in radians/sec)
+ *  â exact for the small angles involved here. */
+function oknLinearSpeedMMPerSec(distanceInches, degPerSec) {
+  const distanceMM = distanceInches * IN_TO_MM;
+  return distanceMM * degPerSec * (Math.PI / 180);
+}
 
 /**
  * Converts a light wavelength (nm) to an approximate display RGB
@@ -140,7 +202,7 @@ function wavelengthToRGB(nm) {
   return `rgb(${gammaCorrect(R)}, ${gammaCorrect(G)}, ${gammaCorrect(B)})`;
 }
 
-// British Standard 3668 duochrome wavelengths — dioptrically
+// British Standard 3668 duochrome wavelengths â dioptrically
 // equidistant (~0.25D) from the 570nm yellow reference point that
 // the test's refraction logic is built on.
 const DUOCHROME_GREEN_NM = 535;
@@ -162,7 +224,7 @@ function optotypeHeightMM(distanceInches, acuityFactor) {
   return heightAt20_20 * acuityFactor;
 }
 
-/* ---------------- Calibration state (device-specific, persisted) --------------- */
+/* ---------------- Calibration state (device-specific, persisted) ---------------- */
 
 const CAL_KEY = "vcc_calibration_v1";
 const SETTINGS_KEY = "vcc_settings_v1";
