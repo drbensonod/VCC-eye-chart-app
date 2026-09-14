@@ -154,6 +154,10 @@ function renderCurrentChart() {
     renderDuochromeMode(pxPerMM, distanceInches);
     return;
   }
+  if (state.settings.activeTest === "fixation") {
+    renderFixationMode(pxPerMM);
+    return;
+  }
 
   const chartType = CHART_TYPES[state.settings.lastChartType];
   const chartTypeId = state.settings.lastChartType;
@@ -205,6 +209,14 @@ function renderCurrentChart() {
     renderVerticalColumn(el.stimulusArea, letters, levels.map((l) => l.heightPx), state.settings.lastContrastId, labels, chartTypeId);
     el.marginLabel.textContent = "";
   }
+}
+
+/* ---------------- Fixation target mode ---------------- */
+
+function renderFixationMode(pxPerMM) {
+  const diameterPx = FIXATION_CIRCLE_DIAMETER_IN * IN_TO_MM * pxPerMM;
+  renderFixationTarget(el.stimulusArea, diameterPx);
+  el.marginLabel.textContent = "";
 }
 
 /* ---------------- Duochrome mode ---------------- */
@@ -386,6 +398,7 @@ function setupMenuControls() {
       renderCurrentChart();
       highlightSelected("[data-chart-type]", btn);
       document.getElementById("duochrome-btn").classList.remove("selected");
+      document.getElementById("fixation-btn").classList.remove("selected");
     });
   });
 
@@ -399,6 +412,7 @@ function setupMenuControls() {
       renderCurrentChart();
       highlightSelected("[data-display-mode]", btn);
       document.getElementById("duochrome-btn").classList.remove("selected");
+      document.getElementById("fixation-btn").classList.remove("selected");
     });
   });
 
@@ -408,6 +422,16 @@ function setupMenuControls() {
     persistSettings();
     renderCurrentChart();
     e.target.classList.add("selected");
+    document.getElementById("fixation-btn").classList.remove("selected");
+  });
+
+  // Fixation target toggle
+  document.getElementById("fixation-btn").addEventListener("click", (e) => {
+    state.settings.activeTest = "fixation";
+    persistSettings();
+    renderCurrentChart();
+    e.target.classList.add("selected");
+    document.getElementById("duochrome-btn").classList.remove("selected");
   });
 
   // Contrast

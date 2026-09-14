@@ -108,6 +108,13 @@ const CONTRAST_PRESETS = [
 
 const IN_TO_MM = 25.4;
 
+// Fixation target — a solid, bright circle used for Maddox rod and
+// cover testing. Size locked in at 0.75 inches based on typical
+// clinical fixation target sizing (large enough to hold gaze from
+// across the room, small enough to demand a precise single fixation
+// point).
+const FIXATION_CIRCLE_DIAMETER_IN = 0.75;
+
 /**
  * Converts a light wavelength (nm) to an approximate display RGB
  * value (Dan Bruton's well-known visible-spectrum approximation,

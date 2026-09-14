@@ -1,27 +1,27 @@
 /* ============================================================
-   VCC Vision Screening App â Optotype Sets
+   VCC Vision Screening App — Optotype Sets
    ============================================================ */
 
 // Traditional Snellen letter set (9 letters, historically used
 // across the classic Snellen chart lineage).
 const SNELLEN_LETTERS = ["C", "D", "E", "F", "L", "O", "P", "T", "Z"];
 
-// ETDRS / Sloan letter set â 10 letters selected by Louise Sloan (1959)
+// ETDRS / Sloan letter set — 10 letters selected by Louise Sloan (1959)
 // for approximately equal legibility across the set.
 const SLOAN_LETTERS = ["C", "D", "H", "K", "N", "O", "R", "S", "V", "Z"];
 
-// HOTV â a 4-letter matching test for pre-readers who know the
+// HOTV — a 4-letter matching test for pre-readers who know the
 // alphabet's shapes but not necessarily its names. Public domain,
 // widely endorsed for pediatric screening (unlike the trademarked
 // Lea symbols), typically administered as letter-matching rather
 // than naming.
 const HOTV_LETTERS = ["H", "O", "T", "V"];
 
-// Pediatric numbers â accepted alternative optotype set for children
+// Pediatric numbers — accepted alternative optotype set for children
 // who know numerals before letters.
 const NUMBER_OPTOTYPES = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
 
-// Allen figures â a pediatric picture-optotype tradition dating to
+// Allen figures — a pediatric picture-optotype tradition dating to
 // 1957. These are ORIGINAL pictograms drawn in the spirit of the
 // classic set (simple, everyday silhouettes a young child can name)
 // rather than traced from any existing commercial card, avoiding
@@ -32,10 +32,10 @@ const ALLEN_FIGURES = [
   { id: "car",   label: "Car" },
   { id: "tree",  label: "Tree" },
 ];
-// Landolt C â the international ISO 8596 reference optotype. A ring
+// Landolt C — the international ISO 8596 reference optotype. A ring
 // with a gap in one of 8 orientations; the patient indicates which
 // way the gap points. Requires no literacy or symbol recognition at
-// all, which is why it's the gold-standard non-verbal test â even
+// all, which is why it's the gold-standard non-verbal test — even
 // more validated than pediatric picture tests.
 const LANDOLT_ORIENTATIONS = [
   { angleDeg: 0,   label: "Right" },
@@ -49,7 +49,7 @@ const LANDOLT_ORIENTATIONS = [
 ];
 
 // Note: orientation selection reuses the generic pickLetterNoRepeat/
-// generateLine functions below â reference equality works correctly
+// generateLine functions below — reference equality works correctly
 // since orientation objects come from this fixed shared array.
 
 const CHART_TYPES = {
@@ -57,7 +57,7 @@ const CHART_TYPES = {
   etdrs:   { label: "ETDRS",   letters: SLOAN_LETTERS,   lettersPerLine: 5 },
   hotv:    { label: "HOTV",    letters: HOTV_LETTERS,    lettersPerLine: null },
   numbers: { label: "Numbers", letters: NUMBER_OPTOTYPES, lettersPerLine: null },
-  landolt: { label: "Landolt C", letters: LANDOLT_ORIENTATIONS, lettersPerLine: null }, // "letters" here are orientation objects, not text â see makeOptotypeNode
+  landolt: { label: "Landolt C", letters: LANDOLT_ORIENTATIONS, lettersPerLine: null }, // "letters" here are orientation objects, not text — see makeOptotypeNode
   allen:   { label: "Allen Figures", letters: ALLEN_FIGURES, lettersPerLine: null }, // "letters" here are figure-id objects, not text
 };
 
@@ -78,7 +78,7 @@ function pickLetterNoRepeat(letterSet, previous) {
 /**
  * Generates a full line of `count` letters, each guaranteed to
  * differ from its immediate left neighbor (not just from the
- * previous chart state) â matches how ETDRS lines are built so
+ * previous chart state) — matches how ETDRS lines are built so
  * no two adjacent optotypes on the same line are identical.
  */
 function generateLine(letterSet, count) {
