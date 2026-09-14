@@ -1,5 +1,5 @@
 /* ============================================================
-   VCC Vision Screening App — Chart Rendering Engine
+   VCC Vision Screening App â Chart Rendering Engine
    ============================================================ */
 
 const OPTOTYPE_FONT_FAMILY = "OpticianSans";
@@ -7,16 +7,16 @@ const OPTOTYPE_FONT_FAMILY = "OpticianSans";
 // Measured once per session: ratio of actual rendered cap height
 // to the CSS font-size used to render it. Fonts don't fill their
 // full em box, so we measure Optician Sans directly rather than
-// assume a ratio — this is what makes the physical-mm sizing
+// assume a ratio â this is what makes the physical-mm sizing
 // promise (Section 3 of the spec) actually true on screen.
 let _fontHeightRatio = null;
 
 function measureFontHeightRatio() {
-  const refSize = 200; // px — large enough for sub-pixel accuracy, cheap to measure
+  const refSize = 200; // px â large enough for sub-pixel accuracy, cheap to measure
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   ctx.font = `${refSize}px ${OPTOTYPE_FONT_FAMILY}`;
-  // "H" is a full-height, flat-top/flat-bottom glyph — a reliable
+  // "H" is a full-height, flat-top/flat-bottom glyph â a reliable
   // reference for cap-height across the Sloan/Snellen letter sets.
   const metrics = ctx.measureText("H");
   const measuredHeight =
@@ -35,22 +35,27 @@ function fontSizeForHeightPx(targetHeightPx) {
  * Returns the "size" value each render/measurement call site should
  * use: for font-based optotypes (Snellen/ETDRS/HOTV/Numbers) that's
  * the font-size needed to achieve the target physical height (since
- * glyphs don't fill their full em-box). For Landolt C — a directly
- * drawn vector shape with no font em-box quirk — the target height
+ * glyphs don't fill their full em-box). For Landolt C â a directly
+ * drawn vector shape with no font em-box quirk â the target height
  * IS the rendered size, exactly, with no conversion needed.
  */
 function effectiveOptotypeSizePx(chartTypeId, heightPx) {
-  return chartTypeId === "landolt" ? heightPx : fontSizeForHeightPx(heightPx);
+  return (chartTypeId === "landolt" || chartTypeId === "allen") ? heightPx : fontSizeForHeightPx(heightPx);
 }
 
 /**
- * Creates the actual visual node for one optotype — a text span for
- * font-based charts, or an SVG ring for Landolt C — so every render
+ * Creates the actual visual node for one optotype â a text span for
+ * font-based charts, or an SVG ring for Landolt C â so every render
  * function can stay agnostic to which kind of chart is active.
  */
 function makeOptotypeNode(content, sizePx, colorCss, chartTypeId) {
   if (chartTypeId === "landolt") {
     const svg = createLandoltCElement(sizePx, content.angleDeg, colorCss);
+    svg.classList.add("optotype-svg");
+    return svg;
+  }
+  if (chartTypeId === "allen") {
+    const svg = createAllenFigureElement(sizePx, content.id, colorCss);
     svg.classList.add("optotype-svg");
     return svg;
   }
@@ -64,8 +69,8 @@ function makeOptotypeNode(content, sizePx, colorCss, chartTypeId) {
 
 // Cache of max-character-width-to-font-size ratio, keyed by chart
 // type, so width-fit math doesn't re-measure the canvas every call.
-const _charWidthRatioCache = {}; // worst-case (widest letter) — used for ETDRS
-const _avgCharWidthRatioCache = {}; // average — used for Snellen (looser validity requirement, so a rare tight fit is an acceptable tradeoff for meaningfully bigger usable sizes)
+const _charWidthRatioCache = {}; // worst-case (widest letter) â used for ETDRS
+const _avgCharWidthRatioCache = {}; // average â used for Snellen (looser validity requirement, so a rare tight fit is an acceptable tradeoff for meaningfully bigger usable sizes)
 
 /**
  * Measures the WIDEST letter in a given optotype set (worst case,
@@ -73,7 +78,7 @@ const _avgCharWidthRatioCache = {}; // average — used for Snellen (looser vali
  * returns its width as a ratio of font-size.
  */
 function measureMaxCharWidthRatio(chartTypeId, letterSet) {
-  if (chartTypeId === "landolt") return 1.0; // exact square bounding box, no measurement needed
+  if (chartTypeId === "landolt" || chartTypeId === "allen") return 1.0; // exact square bounding box, no measurement needed
   if (_charWidthRatioCache[chartTypeId]) return _charWidthRatioCache[chartTypeId];
   const refSize = 200;
   const canvas = document.createElement("canvas");
@@ -92,12 +97,12 @@ function measureMaxCharWidthRatio(chartTypeId, letterSet) {
 /**
  * Measures the AVERAGE letter width across a set. Used for Snellen,
  * where letter-by-letter validity isn't a hard clinical requirement
- * (unlike ETDRS) — trading a small chance of an occasional tight
+ * (unlike ETDRS) â trading a small chance of an occasional tight
  * fit on an unlucky all-wide-letters draw for a meaningfully larger
  * usable size range.
  */
 function measureAvgCharWidthRatio(chartTypeId, letterSet) {
-  if (chartTypeId === "landolt") return 1.0; // exact square bounding box, no measurement needed
+  if (chartTypeId === "landolt" || chartTypeId === "allen") return 1.0; // exact square bounding box, no measurement needed
   if (_avgCharWidthRatioCache[chartTypeId]) return _avgCharWidthRatioCache[chartTypeId];
   const refSize = 200;
   const canvas = document.createElement("canvas");
@@ -120,7 +125,7 @@ const LETTER_GAP_EM = 0.4; // must match .optotype-row gap in styles.css
  * Builds the SVG path for a Landolt C ring at a given pixel size
  * and gap orientation, following the standard proportions: stroke
  * width = 1/5 of overall diameter, gap width = 1/5 of diameter
- * (measured at the ring's mean radius) — the same ratio used for
+ * (measured at the ring's mean radius) â the same ratio used for
  * the letter strokes/gaps in every other optotype in this app.
  */
 function landoltCPathD(sizePx, angleDeg) {
@@ -132,7 +137,7 @@ function landoltCPathD(sizePx, angleDeg) {
   const rMean = rOuter - strokeWidth / 2;
 
   // Gap angular width, in radians, derived so its LINEAR width at
-  // the ring's mean radius equals the stroke width (1/5 diameter) —
+  // the ring's mean radius equals the stroke width (1/5 diameter) â
   // this ratio is constant regardless of overall size.
   const gapAngleRad = strokeWidth / rMean;
   const gapAngleDeg = (gapAngleRad * 180) / Math.PI;
@@ -172,6 +177,55 @@ function createLandoltCElement(sizePx, angleDeg, colorCss) {
   return svg;
 }
 
+/* ---------------- Allen figure pictograms ---------------- */
+// Original silhouette artwork (not traced from any existing
+// commercial card) drawn on a normalized 0-100 grid, then scaled to
+// the target pixel size. Simple, everyday shapes a young child can
+// name, in the spirit of the classic 1957 Allen figure set.
+
+const ALLEN_FIGURE_SVG_MARKUP = {
+  cake: `
+    <rect x="15" y="55" width="70" height="35" rx="4"/>
+    <rect x="15" y="55" width="70" height="8"/>
+    <rect x="46" y="30" width="8" height="20"/>
+    <path d="M 50 15 C 44 22, 44 28, 50 30 C 56 28, 56 22, 50 15 Z"/>
+  `,
+  phone: `
+    <path d="M 20 30 C 20 22, 30 15, 50 15 C 70 15, 80 22, 80 30
+             L 80 40 C 80 46, 74 46, 70 44 C 66 42, 60 42, 56 46
+             C 52 50, 48 50, 44 46 C 40 42, 34 42, 30 44
+             C 26 46, 20 46, 20 40 Z"/>
+    <rect x="35" y="55" width="30" height="30" rx="3"/>
+    <circle cx="50" cy="70" r="6" fill="#FFFFFF"/>
+  `,
+  car: `
+    <path d="M 12 65 L 20 45 C 22 40, 28 38, 34 38 L 66 38
+             C 72 38, 78 40, 80 45 L 88 65 Z"/>
+    <rect x="8" y="62" width="84" height="14" rx="4"/>
+    <circle cx="28" cy="80" r="10"/>
+    <circle cx="72" cy="80" r="10"/>
+    <circle cx="28" cy="80" r="4" fill="#FFFFFF"/>
+    <circle cx="72" cy="80" r="4" fill="#FFFFFF"/>
+  `,
+  tree: `
+    <rect x="45" y="60" width="10" height="28"/>
+    <circle cx="50" cy="42" r="28"/>
+  `,
+};
+
+function createAllenFigureElement(sizePx, figureId, colorCss) {
+  const svgNS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("width", sizePx);
+  svg.setAttribute("height", sizePx);
+  svg.setAttribute("viewBox", "0 0 100 100");
+  const group = document.createElementNS(svgNS, "g");
+  group.setAttribute("fill", colorCss);
+  group.innerHTML = ALLEN_FIGURE_SVG_MARKUP[figureId] || "";
+  svg.appendChild(group);
+  return svg;
+}
+
 /**
  * How many letters of a given font-size can fit on one line within
  * the available screen width, using the widest letter in the set
@@ -191,20 +245,20 @@ function maxLettersFittingWidth(fontSizePx, screenWidthPx, chartTypeId, letterSe
 /**
  * Logarithmic line-progression step for a chart type.
  * Modernized Snellen: 25% size increase per line (1.25x).
- * ETDRS: strict 0.1 log unit per line -> 10^0.1 ≈ 1.2589x.
+ * ETDRS: strict 0.1 log unit per line -> 10^0.1 â 1.2589x.
  */
 function progressionStep(chartTypeId) {
   return chartTypeId === "etdrs" ? Math.pow(10, 0.1) : 1.25;
 }
 
-const LINE_GAP_RATIO = 0.45; // gap between stacked lines, as a fraction of line height — a real chart's line gap is well under a full extra line-height; the previous 1.0 (double-height) was the root cause of "stuck at one line"/blank-screen bugs
+const LINE_GAP_RATIO = 0.45; // gap between stacked lines, as a fraction of line height â a real chart's line gap is well under a full extra line-height; the previous 1.0 (double-height) was the root cause of "stuck at one line"/blank-screen bugs
 
 /**
  * Builds the ordered list of levels to use for a stacked chart or
  * vertical column, largest-to-smallest, walking the appropriate
  * discrete level series (far Snellen-equivalent steps, or the
  * near-point M-value scale) rather than a continuous multiplicative
- * loop — this keeps every displayed size aligned to a clean,
+ * loop â this keeps every displayed size aligned to a clean,
  * labelable step.
  *
  * `startOffset` lets the operator shift which portion of the range
@@ -217,16 +271,16 @@ const LINE_GAP_RATIO = 0.45; // gap between stacked lines, as a fraction of line
  *     Any level that can't fit 5 letters at its width is skipped
  *     entirely (never shown as a short invalid line).
  *   - Snellen allows the letter count to shrink to whatever fits
- *     (minimum 1) — consistent with the original chart's single
+ *     (minimum 1) â consistent with the original chart's single
  *     giant letter on its largest line.
  *   - A level whose single line doesn't even fit the screen HEIGHT
- *     is skipped (not treated as a hard stop) — this is what fixes
+ *     is skipped (not treated as a hard stop) â this is what fixes
  *     "blank screen" at long distances, where the coarsest levels
  *     can be taller than the whole display.
  */
 /**
  * The conventional "top of chart" starting point for stacked/column
- * mode — NOT the same as the extended ceiling used for single-letter
+ * mode â NOT the same as the extended ceiling used for single-letter
  * mode's max ("as big as the screen allows"). Starting a multi-line
  * chart at that extreme ceiling would consume the entire vertical
  * budget on one giant line, leaving no room for the rest. Far
@@ -270,7 +324,7 @@ function buildStackedLevels(chartTypeId, distanceInches, screenHeightPx, screenW
 
     let count;
     if (chartTypeId === "etdrs") {
-      if (maxFit < targetCount) continue; // invalid ETDRS line at this size — skip, don't stop
+      if (maxFit < targetCount) continue; // invalid ETDRS line at this size â skip, don't stop
       count = targetCount;
     } else {
       count = Math.min(targetCount, maxFit);
@@ -278,7 +332,7 @@ function buildStackedLevels(chartTypeId, distanceInches, screenHeightPx, screenW
 
     // Real occupied vertical space per line is the full font-size
     // box (since line-height:1 makes the line box = 1em), NOT the
-    // smaller visible cap-height — this is the same em-vs-cap-height
+    // smaller visible cap-height â this is the same em-vs-cap-height
     // gap noted in the sizing engine, here affecting the height
     // budget rather than the width one. Using fontSizePx here (not
     // heightPx) is what fixes the overflow/cutoff bug.
@@ -291,7 +345,7 @@ function buildStackedLevels(chartTypeId, distanceInches, screenHeightPx, screenW
       if (lineHeightPx > screenHeightPx) continue;
       started = true;
     } else if (usedHeight + lineHeightPx > screenHeightPx) {
-      break; // vertical budget used up — stop adding smaller lines
+      break; // vertical budget used up â stop adding smaller lines
     }
 
     levels.push({ factor, heightPx, count, label: labelForLevel(levelEntry, isNearPoint) });
@@ -326,6 +380,7 @@ function findLargestFittingIndex(series, chartTypeId, distanceInches, screenWidt
 
 function clearStimulusArea(el) {
   el.innerHTML = "";
+  el.style.background = "#FFFFFF"; // reset in case fixation mode (black background) was previously active
 }
 
 function renderSingleLetter(container, content, heightPx, contrastId, chartTypeId) {
@@ -363,8 +418,8 @@ function renderStackedLines(container, chart, levels, letterSet, contrastId, lab
 
     const sizePx = effectiveOptotypeSizePx(chartTypeId, level.heightPx);
     // Match the exact gap the vertical-fit budget math assumed
-    // (LINE_GAP_RATIO × this line's size), so what's rendered is
-    // what was actually budgeted for — no CSS/JS mismatch.
+    // (LINE_GAP_RATIO Ã this line's size), so what's rendered is
+    // what was actually budgeted for â no CSS/JS mismatch.
     if (i < levels.length - 1) {
       lineWrap.style.marginBottom = `${sizePx * LINE_GAP_RATIO}px`;
     }
@@ -415,7 +470,7 @@ function renderVerticalColumn(container, items, heightsPx, contrastId, labels, c
 function colorForContrast(contrastId) {
   const preset = CONTRAST_PRESETS.find((c) => c.id === contrastId) || CONTRAST_PRESETS[0];
   // Weber contrast = (Lbackground - Lforeground) / Lbackground, where L
-  // is true photometric luminance — NOT raw sRGB pixel value. Screens
+  // is true photometric luminance â NOT raw sRGB pixel value. Screens
   // apply a gamma curve (~2.2), so converting a target luminance back
   // into an 8-bit pixel value requires the inverse-gamma step below.
   // Skipping this (naive linear pixel math) would render meaningfully
@@ -427,13 +482,35 @@ function colorForContrast(contrastId) {
   return `rgb(${v}, ${v}, ${v})`;
 }
 
+/* ---------------- Fixation target (Maddox rod / cover test) ---------------- */
+
+/**
+ * Renders a single solid, bright white circle on a dark field â
+ * used for Maddox rod and cover testing. Presented on a dark/black
+ * background (not the normal white chart field) since these tests
+ * are performed with dim ambient lighting, where the point target
+ * needs to be the dominant visible light source.
+ */
+function renderFixationTarget(container, diameterPx) {
+  clearStimulusArea(container);
+  container.style.background = "#000000";
+  const wrap = document.createElement("div");
+  wrap.className = "stimulus-center";
+  const circle = document.createElement("div");
+  circle.className = "fixation-circle";
+  circle.style.width = `${diameterPx}px`;
+  circle.style.height = `${diameterPx}px`;
+  wrap.appendChild(circle);
+  container.appendChild(wrap);
+}
+
 /* ---------------- Duochrome (red/green refraction) test ---------------- */
 
 /**
  * Renders the traditional duochrome layout: a bipartite red/green
  * field (colors derived from the literature wavelengths, not an
  * arbitrary hue) with the SAME black letters shown on both halves
- * at a fixed, moderate size — this is a refraction-refinement tool,
+ * at a fixed, moderate size â this is a refraction-refinement tool,
  * not an acuity measurement, so it deliberately does NOT scale with
  * the calibrated distance/acuity system the rest of the app uses.
  */
@@ -458,7 +535,7 @@ function renderDuochrome(container, letters, heightPx) {
       const span = document.createElement("span");
       span.className = "optotype";
       span.style.fontSize = `${fontSizeForHeightPx(heightPx)}px`;
-      span.style.color = "#000000"; // fixed black, per the traditional test — not tied to contrast presets
+      span.style.color = "#000000"; // fixed black, per the traditional test â not tied to contrast presets
       span.textContent = letter;
       row.appendChild(span);
     });
