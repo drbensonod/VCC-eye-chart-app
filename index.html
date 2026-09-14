@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>VCC Vision Screening</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="apple-mobile-web-app-title" content="VCC Vision" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<!-- ===================== CALIBRATION SCREEN ===================== -->
+<section id="calibration-screen" class="screen">
+  <div class="cal-panel">
+    <h1>Screen Calibration</h1>
+    <p class="cal-instructions">
+      Hold a standard credit/ID card flat against the screen. Drag the slider
+      until the box below exactly matches the card's width edge-to-edge.
+      This lets the app calculate this iPad's true pixel density, so every
+      optotype size shown afterward is physically accurate.
+    </p>
+    <div class="cal-guide-wrap">
+      <div id="cal-guide-box" class="cal-guide-box"></div>
+    </div>
+    <input type="range" id="cal-slider" min="150" max="500" step="1" />
+    <button id="cal-confirm-btn" class="btn btn-primary">Confirm Calibration</button>
+    <p class="cal-note">Card reference: ISO ID-1 standard, 85.60mm wide (any standard credit, debit, or driver's license card).</p>
+  </div>
+</section>
+
+<!-- ===================== MAIN CHART SCREEN ===================== -->
+<section id="main-screen" class="screen hidden">
+  <div id="stimulus-area" aria-label="Optotype display area"></div>
+  <div id="margin-label" class="margin-label"></div>
+  <div id="menu-tab" class="menu-tab" aria-label="Open menu">&#8249;</div>
+
+  <!-- ===================== MENU DRAWER ===================== -->
+  <aside id="menu-drawer" class="menu-drawer">
+    <div class="menu-header">
+      <span>Settings</span>
+      <button id="menu-close-btn" class="btn-icon">&times;</button>
+    </div>
+
+    <div class="menu-section">
+      <h2>Chart Type</h2>
+      <div class="btn-row">
+        <button data-chart-type="snellen" class="btn btn-option selected">Snellen</button>
+        <button data-chart-type="etdrs" class="btn btn-option">ETDRS</button>
+        <button data-chart-type="hotv" class="btn btn-option">HOTV</button>
+        <button data-chart-type="numbers" class="btn btn-option">Numbers</button>
+        <button data-chart-type="landolt" class="btn btn-option">Landolt C</button>
+      </div>
+    </div>
+
+    <div class="menu-section">
+      <h2>Display Mode</h2>
+      <div class="btn-grid">
+        <button data-display-mode="single-letter" class="btn btn-option">Single Letter</button>
+        <button data-display-mode="single-line" class="btn btn-option">Single Line</button>
+        <button data-display-mode="stacked" class="btn btn-option selected">Stacked Lines</button>
+        <button data-display-mode="column" class="btn btn-option">Vertical Column</button>
+      </div>
+    </div>
+
+    <div class="menu-section">
+      <h2>Working Distance</h2>
+      <div class="btn-grid" id="distance-benchmarks">
+        <button data-distance="12in" class="btn btn-option">12 in</button>
+        <button data-distance="16in" class="btn btn-option">16 in</button>
+        <button data-distance="26in" class="btn btn-option">26 in</button>
+        <button data-distance="6ft" class="btn btn-option">6 ft</button>
+        <button data-distance="10ft" class="btn btn-option selected">10 ft</button>
+        <button data-distance="13ft" class="btn btn-option">13 ft</button>
+        <button data-distance="20ft" class="btn btn-option">20 ft</button>
+      </div>
+      <div class="custom-distance-row">
+        <input type="number" id="custom-distance-input" placeholder="Custom (inches)" />
+        <button id="custom-distance-apply" class="btn btn-secondary">Set</button>
+      </div>
+    </div>
+
+    <div class="menu-section">
+      <h2>Contrast</h2>
+      <div class="btn-row">
+        <button data-contrast="100" class="btn btn-option selected">100%</button>
+        <button data-contrast="25" class="btn btn-option">25%</button>
+        <button data-contrast="10" class="btn btn-option">10%</button>
+        <button data-contrast="5" class="btn btn-option">5%</button>
+        <button data-contrast="2.5" class="btn btn-option">2.5%</button>
+      </div>
+    </div>
+
+    <div class="menu-section">
+      <h2>Refraction Tests</h2>
+      <div class="btn-row">
+        <button id="duochrome-btn" class="btn btn-option">Duochrome (Red/Green)</button>
+      </div>
+    </div>
+
+    <div class="menu-section menu-footer">
+      <button id="validation-mode-btn" class="btn btn-secondary full-width">Validation / Self-Test</button>
+      <button id="recalibrate-btn" class="btn btn-secondary full-width">Recalibrate Screen</button>
+      <button id="reset-home-btn" class="btn btn-warning full-width">Reset to Home</button>
+      <p class="branding-footer">
+        Developed for Vision Coverage of Colorado<br/>
+        For clinical screening and internal use only — not a standalone diagnostic device.
+      </p>
+      <p id="version-tag" class="version-tag"></p>
+    </div>
+  </aside>
+</section>
+
+<!-- ===================== VALIDATION / SELF-TEST SCREEN ===================== -->
+<section id="validation-screen" class="screen hidden overlay-screen">
+  <div class="validation-panel">
+    <div class="menu-header">
+      <span>Validation / Self-Test</span>
+      <button id="close-validation-btn" class="btn-icon">&times;</button>
+    </div>
+    <p class="cal-instructions">
+      Measure each displayed letter "C" against a millimeter ruler and
+      compare to the expected value. Use this before first patient use,
+      and periodically afterward, to confirm calibration accuracy.
+    </p>
+    <div id="validation-table-body" class="validation-table"></div>
+  </div>
+</section>
+
+<script src="js/state.js"></script>
+<script src="js/optotypes.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/app.js"></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch((err) => {
+        console.warn("Service worker registration failed:", err);
+      });
+    });
+  }
+</script>
+</body>
+</html>

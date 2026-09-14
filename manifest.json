@@ -1,0 +1,15 @@
+{
+  "name": "VCC Vision Screening",
+  "short_name": "VCC Vision",
+  "description": "Internal clinical vision screening tool for Vision Coverage of Colorado. Not a diagnostic device.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#14171C",
+  "theme_color": "#14171C",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
