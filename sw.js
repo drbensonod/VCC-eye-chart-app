@@ -1,11 +1,11 @@
 /* ============================================================
-   VCC Vision Screening App — Service Worker
+   VCC Vision Screening App â Service Worker
    Caches everything needed to run fully offline. Bump CACHE_NAME
    whenever app files change so clients pick up the new version;
    the update happens silently the next time a device has WiFi.
    ============================================================ */
 
-const CACHE_NAME = "vcc-vision-v1.0.0";
+const CACHE_NAME = "vcc-vision-v1.1.0";
 
 const APP_SHELL = [
   "./",
