@@ -230,8 +230,8 @@ function createAllenFigureElement(sizePx, figureId, colorCss) {
  */
 function maxLettersFittingWidth(fontSizePx, screenWidthPx, chartTypeId, letterSet) {
   const charWidthRatio = chartTypeId === "etdrs"
-    ? measureMaxCharWidthRatio(charTypeId, letterSet)
-    : measureAvgCharWidthRatio(charTypeId, letterSet);
+    ? measureMaxCharWidthRatio(chartTypeId, letterSet)
+    : measureAvgCharWidthRatio(chartTypeId, letterSet);
   const charWidthPx = fontSizePx * charWidthRatio;
   const gapPx = fontSizePx * LETTER_GAP_EM;
   const usablePx = screenWidthPx * 0.92; // small safety margin from screen edges
