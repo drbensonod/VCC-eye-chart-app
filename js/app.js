@@ -1,5 +1,5 @@
 /* ============================================================
-   VCC Vision Screening App — Main Controller
+   VCC Vision Screening App â Main Controller
    ============================================================ */
 
 const state = {
@@ -11,6 +11,7 @@ const state = {
   singleModeLevelIndex: null, // index into the current level series; null = not yet initialized for this distance/mode
   stackedRangeOffset: 0,      // how far into the level series the stacked/column chart starts (0 = largest that fits)
   duochromeLetters: null,     // fixed letter set shown on both duochrome halves; null until first generated
+  oknLevelIndex: 0,           // index into OKN_LEVELS; 0 = coarsest (20/200-equivalent)
 };
 
 const el = {
@@ -44,7 +45,7 @@ async function init() {
 
   // Critical: wait for the real Optician Sans font to finish loading
   // before ANY font-metric measurement or chart render happens.
-  // Custom web fonts don't load instantly — measuring or rendering
+  // Custom web fonts don't load instantly â measuring or rendering
   // too early silently falls back to a system font with different
   // proportions, causing a systematic (but hard-to-notice) sizing
   // error once the real font swaps in afterward. This is what the
@@ -61,7 +62,7 @@ async function init() {
 /** Explicitly forces the browser to load the custom optotype font
  *  and waits for confirmation, rather than assuming it's ready. */
 async function ensureOpticianSansLoaded() {
-  if (!("fonts" in document)) return; // very old Safari fallback — proceeds without the guarantee
+  if (!("fonts" in document)) return; // very old Safari fallback â proceeds without the guarantee
   try {
     await document.fonts.load(`200px ${OPTOTYPE_FONT_FAMILY}`);
     await document.fonts.ready;
@@ -87,7 +88,7 @@ function showMainScreen() {
 function resetToHome() {
   // Crash/error recovery: collapses any open UI state and
   // redraws the chart fresh, without touching calibration or
-  // settings — a safe "get back to a known-good state" action.
+  // settings â a safe "get back to a known-good state" action.
   el.menuDrawer.classList.remove("open");
   closeValidationScreen_ifOpen();
   if (state.calibration && state.calibration.pxPerMM) {
@@ -158,6 +159,10 @@ function renderCurrentChart() {
     renderFixationMode(pxPerMM);
     return;
   }
+  if (state.settings.activeTest === "okn") {
+    renderOKNMode(pxPerMM);
+    return;
+  }
 
   const chartType = CHART_TYPES[state.settings.lastChartType];
   const chartTypeId = state.settings.lastChartType;
@@ -219,9 +224,21 @@ function renderFixationMode(pxPerMM) {
   el.marginLabel.textContent = "";
 }
 
+/* ---------------- OKN drum mode ---------------- */
+
+function renderOKNMode(pxPerMM) {
+  const idx = Math.min(Math.max(state.oknLevelIndex, 0), OKN_LEVELS.length - 1);
+  const level = OKN_LEVELS[idx];
+  const cycleWidthMM = oknCycleWidthMM(OKN_VIEWING_DISTANCE_IN, level.cpd);
+  const cycleWidthPx = cycleWidthMM * pxPerMM;
+  const durationSec = 1 / OKN_TEMPORAL_FREQUENCY_HZ; // constant across all levels, see state.js note
+  renderOKN(el.stimulusArea, cycleWidthPx, durationSec);
+  el.marginLabel.textContent = `${level.snellen}-equiv \u00b7 ${level.cpd} cpd`;
+}
+
 /* ---------------- Duochrome mode ---------------- */
 
-const DUOCHROME_ACUITY_FACTOR = 2; // fixed ~20/40-equivalent size — a "moderate" refraction-refinement size, not tied to the acuity-testing level system
+const DUOCHROME_ACUITY_FACTOR = 2; // fixed ~20/40-equivalent size â a "moderate" refraction-refinement size, not tied to the acuity-testing level system
 const DUOCHROME_LETTER_COUNT = 3;
 
 function renderDuochromeMode(pxPerMM, distanceInches) {
@@ -246,6 +263,13 @@ function cycleDuochromeLetters() {
 
 function decreaseSize() {
   // Swipe up: move toward SMALLER (finer/harder) sizes.
+  if (state.settings.activeTest === "okn") {
+    if (state.oknLevelIndex < OKN_LEVELS.length - 1) {
+      state.oknLevelIndex += 1;
+      renderCurrentChart();
+    }
+    return;
+  }
   const mode = state.settings.lastDisplayMode;
   if (mode === "single-letter" || mode === "single-line") {
     const nearPoint = isCurrentDistanceNearPoint();
@@ -267,6 +291,13 @@ function decreaseSize() {
 
 function increaseSize() {
   // Swipe down: move toward LARGER (coarser/easier) sizes.
+  if (state.settings.activeTest === "okn") {
+    if (state.oknLevelIndex > 0) {
+      state.oknLevelIndex -= 1;
+      renderCurrentChart();
+    }
+    return;
+  }
   const mode = state.settings.lastDisplayMode;
   if (mode === "single-letter" || mode === "single-line") {
     const nearPoint = isCurrentDistanceNearPoint();
@@ -291,7 +322,7 @@ function increaseSize() {
   }
 }
 
-/** Resets manual size-stepping state — called whenever distance,
+/** Resets manual size-stepping state â called whenever distance,
  *  chart type, or display mode changes, since the previous index
  *  may no longer be meaningful (near vs far use different series
  *  entirely, and ETDRS vs Snellen fit differently). */
@@ -306,6 +337,9 @@ function cycleCurrentChart() {
   if (state.settings.activeTest === "duochrome") {
     cycleDuochromeLetters();
     return;
+  }
+  if (state.settings.activeTest === "okn" || state.settings.activeTest === "fixation") {
+    return; // no letters to cycle in these modes
   }
   const mode = state.settings.lastDisplayMode;
   const chartType = CHART_TYPES[state.settings.lastChartType];
@@ -341,7 +375,7 @@ function setupGestures() {
 
   // Edge-swipe to open menu (right edge), and vertical swipe on the
   // stimulus area to step optotype size up/down one line at a time
-  // (single-letter / single-line modes only — see decreaseSize/increaseSize).
+  // (single-letter / single-line modes only â see decreaseSize/increaseSize).
   let touchStartX = null;
   let touchStartY = null;
   document.addEventListener("touchstart", (e) => {
@@ -388,6 +422,12 @@ function closeMenu() {
 /* ---------------- Menu controls ---------------- */
 
 function setupMenuControls() {
+  const clearRefractionTestButtons = () => {
+    document.getElementById("duochrome-btn").classList.remove("selected");
+    document.getElementById("fixation-btn").classList.remove("selected");
+    document.getElementById("okn-btn").classList.remove("selected");
+  };
+
   // Chart type
   document.querySelectorAll("[data-chart-type]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -397,8 +437,7 @@ function setupMenuControls() {
       resetSizeStepping();
       renderCurrentChart();
       highlightSelected("[data-chart-type]", btn);
-      document.getElementById("duochrome-btn").classList.remove("selected");
-      document.getElementById("fixation-btn").classList.remove("selected");
+      clearRefractionTestButtons();
     });
   });
 
@@ -411,8 +450,7 @@ function setupMenuControls() {
       resetSizeStepping();
       renderCurrentChart();
       highlightSelected("[data-display-mode]", btn);
-      document.getElementById("duochrome-btn").classList.remove("selected");
-      document.getElementById("fixation-btn").classList.remove("selected");
+      clearRefractionTestButtons();
     });
   });
 
@@ -421,8 +459,8 @@ function setupMenuControls() {
     state.settings.activeTest = "duochrome";
     persistSettings();
     renderCurrentChart();
+    clearRefractionTestButtons();
     e.target.classList.add("selected");
-    document.getElementById("fixation-btn").classList.remove("selected");
   });
 
   // Fixation target toggle
@@ -430,8 +468,18 @@ function setupMenuControls() {
     state.settings.activeTest = "fixation";
     persistSettings();
     renderCurrentChart();
+    clearRefractionTestButtons();
     e.target.classList.add("selected");
-    document.getElementById("duochrome-btn").classList.remove("selected");
+  });
+
+  // OKN drum toggle
+  document.getElementById("okn-btn").addEventListener("click", (e) => {
+    state.settings.activeTest = "okn";
+    state.oknLevelIndex = 0;
+    persistSettings();
+    renderCurrentChart();
+    clearRefractionTestButtons();
+    e.target.classList.add("selected");
   });
 
   // Contrast
@@ -444,7 +492,7 @@ function setupMenuControls() {
     });
   });
 
-  // Distance — benchmarks
+  // Distance â benchmarks
   document.querySelectorAll("[data-distance]").forEach((btn) => {
     btn.addEventListener("click", () => {
       state.settings.lastDistanceId = btn.dataset.distance;
