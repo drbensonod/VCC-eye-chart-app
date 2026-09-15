@@ -501,6 +501,40 @@ function renderFixationTarget(container, diameterPx) {
   container.appendChild(wrap);
 }
 
+/* ---------------- Optokinetic (OKN) drum ---------------- */
+
+/**
+ * Renders a continuously left-to-right scrolling black/white
+ * square-wave grating at 100% contrast. Implemented as a CSS
+ * repeating-linear-gradient background with a dynamically injected
+ * keyframe animation (not per-frame JS) for smooth, low-overhead
+ * motion â cycleWidthPx and durationSec are computed fresh for each
+ * spatial-frequency level so the visual "scroll rate" matches the
+ * physics exactly (see the OKN_LEVELS temporal-frequency note).
+ */
+function renderOKN(container, cycleWidthPx, durationSec) {
+  clearStimulusArea(container);
+  const field = document.createElement("div");
+  field.className = "okn-field";
+  const halfCycle = cycleWidthPx / 2;
+  field.style.backgroundImage =
+    `repeating-linear-gradient(to right, #000 0px, #000 ${halfCycle}px, #fff ${halfCycle}px, #fff ${cycleWidthPx}px)`;
+  field.style.backgroundSize = `${cycleWidthPx}px 100%`;
+
+  const styleId = "okn-keyframe-style";
+  let styleTag = document.getElementById(styleId);
+  if (!styleTag) {
+    styleTag = document.createElement("style");
+    styleTag.id = styleId;
+    document.head.appendChild(styleTag);
+  }
+  styleTag.textContent =
+    `@keyframes oknScroll { from { background-position-x: 0px; } to { background-position-x: ${cycleWidthPx}px; } }`;
+  field.style.animation = `oknScroll ${durationSec}s linear infinite`;
+
+  container.appendChild(field);
+}
+
 /* ---------------- Duochrome (red/green refraction) test ---------------- */
 
 /**
