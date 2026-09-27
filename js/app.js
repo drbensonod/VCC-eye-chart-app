@@ -383,6 +383,17 @@ function setupGestures() {
     touchStartY = e.touches[0].clientY;
   });
   document.addEventListener("touchend", (e) => {
+    // Tapping anywhere outside the open menu drawer closes it, without
+    // also triggering the swipe-to-resize/open-menu logic below.
+    if (el.menuDrawer.classList.contains("open")) {
+      const insideMenu = e.target.closest(".menu-drawer") || e.target.closest("#menu-tab");
+      if (!insideMenu) {
+        closeMenu();
+        touchStartX = null;
+        touchStartY = null;
+        return;
+      }
+    }
     if (touchStartX === null) return;
     const touch = (e.changedTouches && e.changedTouches[0]) || null;
     const endX = touch ? touch.clientX : touchStartX;
@@ -403,6 +414,14 @@ function setupGestures() {
     }
     touchStartX = null;
     touchStartY = null;
+  });
+
+  // Mouse-click equivalent (for desktop browser testing, and any
+  // pointer-based interaction) of the tap-outside-to-close behavior above.
+  document.addEventListener("click", (e) => {
+    if (!el.menuDrawer.classList.contains("open")) return;
+    const insideMenu = e.target.closest(".menu-drawer") || e.target.closest("#menu-tab");
+    if (!insideMenu) closeMenu();
   });
 
   document.getElementById("menu-tab").addEventListener("click", openMenu);
