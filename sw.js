@@ -5,7 +5,7 @@
    the update happens silently the next time a device has WiFi.
    ============================================================ */
 
-const CACHE_NAME = "vcc-vision-v1.1.0";
+const CACHE_NAME = "vcc-vision-v1.2.0";
 
 const APP_SHELL = [
   "./",
